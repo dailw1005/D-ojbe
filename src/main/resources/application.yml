@@ -1,3 +1,55 @@
 spring:
   application:
     name: dailw
+  mvc:
+    pathmatch:
+      matching-strategy: path_pattern_parser
+  #数据库配置
+  datasource:
+    url: jdbc:mysql://115.190.96.40:3306/dailw
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: B7#kPm9@GfQ1$sH4
+  data:
+    redis:
+      database: 1
+      host: 115.190.96.40
+      port: 6379
+      timeout: 5000
+      password: W6!jF&k2#pL@
+
+server:
+  address: 0.0.0.0
+  port: 8129
+  servlet:
+    context-path: /dailw
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  info:
+    title: dailw
+    description: dailw
+    version: 1.0.0
+  packages-to-scan: com.dailw.controller
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: deleted # 全局逻辑删除的实体字段名
+      logic-delete-value: 1 # 逻辑已删除值（默认为 1）
+      logic-not-delete-value: 0 # 逻辑未删除值（默认为 0）
+
+# JWT配置
+jwt:
+  secret: nH9QZ8+7LpX2Rk5mS7tA3fG8jK2pN5qR8tU1vX4sZ6wD9gB2hC5jE7kF9mH0pJ
+  access-token-expiration: 7200000    # 2小时 (毫秒)
+  refresh-token-expiration: 604800000 # 7天 (毫秒)
+  issuer: dailw-system
