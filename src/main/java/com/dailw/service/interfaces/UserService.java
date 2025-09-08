@@ -1,8 +1,10 @@
 package com.dailw.service.interfaces;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.dailw.model.dto.user.ChangePasswordRequest;
 import com.dailw.model.dto.user.UserLoginRequest;
 import com.dailw.model.dto.user.UserRegisterRequest;
+import com.dailw.model.dto.user.UserUpdateRequest;
 import com.dailw.model.entity.User;
 import com.dailw.model.vo.UserVO;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,6 +30,18 @@ public interface UserService extends IService<User> {
      * 获取当前登录用户
      */
     UserVO getLoginUser(Long userId);
+
+    /**
+     * 更新用户信息
+     * 只能修改当前登录用户的信息
+     */
+    UserVO updateUserInfo(Long userId, UserUpdateRequest userUpdateRequest);
+
+    /**
+     * 修改密码
+     * 验证旧密码并设置新密码
+     */
+    boolean changePassword(Long userId, ChangePasswordRequest changePasswordRequest);
 
 
 }

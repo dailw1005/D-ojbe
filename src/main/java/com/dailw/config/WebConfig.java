@@ -3,6 +3,7 @@ package com.dailw.config;
 import com.dailw.interceptor.JwtAuthenticationInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -44,7 +45,28 @@ public class WebConfig implements WebMvcConfigurer {
                         // 健康检查
                         "/actuator/**",
                         // 错误页面
-                        "/error"
+                        "/error",
+                        // 头像上传路径
+                        "/uploads/avatar/**"
                 );
+    }
+    
+    /**
+     * 配置跨域请求处理
+     * 允许前端应用访问后端API
+     */
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                // 允许的源地址
+                .allowedOriginPatterns("*")
+                // 允许的HTTP方法
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                // 允许的请求头
+                .allowedHeaders("*")
+                // 是否允许发送Cookie
+                .allowCredentials(true)
+                // 预检请求的缓存时间（秒）
+                .maxAge(3600);
     }
 }

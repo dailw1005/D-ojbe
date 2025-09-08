@@ -17,7 +17,6 @@ public class JwtConfig {
     
     /**
      * JWT密钥
-     * 支持通过环境变量JWT_SECRET覆盖
      */
     private String secret = "nH9QZ8+7LpX2Rk5mS7tA3fG8jK2pN5qR8tU1vX4sZ6wD9gB2hC5jE7kF9mH0pJ";
     

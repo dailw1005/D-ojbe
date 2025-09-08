@@ -1,13 +1,13 @@
 package com.dailw.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.dailw.common.ErrorCode;
 import com.dailw.exception.BusinessException;
-import com.dailw.constant.UserConstant;
+import com.dailw.model.dto.user.ChangePasswordRequest;
 import com.dailw.model.dto.user.UserLoginRequest;
 import com.dailw.model.dto.user.UserRegisterRequest;
+import com.dailw.model.dto.user.UserUpdateRequest;
 import com.dailw.service.interfaces.UserService;
 import com.dailw.model.entity.User;
 import com.dailw.model.vo.UserVO;
@@ -114,11 +114,131 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             throw new BusinessException(ErrorCode.FORBIDDEN_ERROR, "账户已被禁用或锁定");
         }
 
-        // 转换为VO对象返回
-        UserVO userVO = getUserVO(user);
-        return userVO;
+        // 转换为VO对象并返回
+        return getUserVO(user);
     }
 
+    @Override
+    public UserVO updateUserInfo(Long userId, UserUpdateRequest userUpdateRequest) {
+        // 校验参数
+        if (userId == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户ID不能为空");
+        }
+        if (userUpdateRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "更新参数不能为空");
+        }
+        
+        // 查询当前用户
+        User user = this.getById(userId);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "用户不存在");
+        }
+        
+        // 检查用户状态
+        if (user.getStatus() == null || user.getStatus() != 1) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_ERROR, "账户已被禁用或锁定");
+        }
+
+        
+        // 更新用户信息（只更新非空字段）
+        if (StringUtils.hasText(userUpdateRequest.getNickname())) {
+            user.setNickname(userUpdateRequest.getNickname());
+        }
+        if (StringUtils.hasText(userUpdateRequest.getAvatar())) {
+            user.setAvatar(userUpdateRequest.getAvatar());
+        }
+        if (userUpdateRequest.getGender() != null) {
+            user.setGender(userUpdateRequest.getGender());
+        }
+        if (userUpdateRequest.getBirthday() != null) {
+            user.setBirthday(userUpdateRequest.getBirthday());
+        }
+        
+        // 设置更新人为当前用户
+        user.setUpdateBy(userId);
+        
+        // 保存更新
+        boolean updateResult = this.updateById(user);
+        if (!updateResult) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "更新用户信息失败");
+        }
+        
+        // 返回更新后的用户信息
+        return getUserVO(user);
+    }
+    
+    @Override
+    public boolean changePassword(Long userId, ChangePasswordRequest changePasswordRequest) {
+        // 校验参数
+        if (userId == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户ID不能为空");
+        }
+        if (changePasswordRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "修改密码参数不能为空");
+        }
+        
+        String oldPassword = changePasswordRequest.getOldPassword();
+        String newPassword = changePasswordRequest.getNewPassword();
+        String confirmPassword = changePasswordRequest.getConfirmPassword();
+        
+        // 校验密码参数
+        if (!StringUtils.hasText(oldPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "旧密码不能为空");
+        }
+        if (!StringUtils.hasText(newPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "新密码不能为空");
+        }
+        if (!StringUtils.hasText(confirmPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "确认密码不能为空");
+        }
+        
+        // 校验新密码和确认密码是否一致
+        if (!newPassword.equals(confirmPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "新密码和确认密码不一致");
+        }
+        
+        // 校验新密码长度
+        if (newPassword.length() < 6) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "新密码长度不能少于6位");
+        }
+        
+        // 查询当前用户
+        User user = this.getById(userId);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "用户不存在");
+        }
+        
+        // 检查用户状态
+        if (user.getStatus() == null || user.getStatus() != 1) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_ERROR, "账户已被禁用或锁定");
+        }
+        
+        // 验证旧密码
+        if (!PasswordUtil.verifyPassword(oldPassword, user.getPassword())) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "旧密码错误");
+        }
+        
+        // 检查新密码是否与旧密码相同
+        if (PasswordUtil.verifyPassword(newPassword, user.getPassword())) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "新密码不能与旧密码相同");
+        }
+        
+        // 加密新密码
+        String encryptedNewPassword = PasswordUtil.encryptPassword(newPassword);
+        
+        // 更新密码
+        user.setPassword(encryptedNewPassword);
+        user.setUpdateBy(userId);
+        
+        // 保存更新
+        boolean updateResult = this.updateById(user);
+        if (!updateResult) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "修改密码失败");
+        }
+        
+        return true;
+    }
+    
     /**
      * 将User实体转换为UserVO
      */

@@ -1,0 +1,76 @@
+# 生产环境配置
+spring:
+  # 数据库配置 - 生产环境
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:dailw}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:password}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # Redis配置 - 生产环境
+  data:
+    redis:
+      database: ${REDIS_DATABASE:0}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 5000
+      password: ${REDIS_PASSWORD:}
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+          max-wait: -1ms
+        shutdown-timeout: 100ms
+
+# 服务器配置 - 生产环境
+server:
+  address: 0.0.0.0
+  port: ${SERVER_PORT:8080}
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
+
+# JWT配置 - 生产环境
+jwt:
+  secret: ${JWT_SECRET:nH9QZ8+7LpX2Rk5mS7tA3fG8jK2pN5qR8tU1vX4sZ6wD9gB2hC5jE7kF9mH0pJ}
+  access-token-expiration: ${JWT_ACCESS_EXPIRATION:3600000}    # 1小时 (毫秒)
+  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7天 (毫秒)
+
+# Actuator监控配置 - 生产环境
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: false
+  security:
+    enabled: true
+
+# 日志配置 - 生产环境
+logging:
+  level:
+    com.dailw: INFO
+    org.springframework: WARN
+    org.mybatis: WARN
+    org.apache.ibatis: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/dailw.log
+    max-size: 100MB
+    max-history: 30
