@@ -321,10 +321,17 @@ public class UserController {
             // 上传新头像
             String avatarUrl = avatarUploadUtil.uploadAvatar(file, currentUserId);
             
-            // 更新用户头像URL到数据库
-            UserUpdateRequest updateRequest = new UserUpdateRequest();
-            updateRequest.setAvatar(avatarUrl);
-            userService.updateUserInfo(currentUserId, updateRequest);
+            try {
+                // 更新用户头像URL到数据库
+                UserUpdateRequest updateRequest = new UserUpdateRequest();
+                updateRequest.setAvatar(avatarUrl);
+                userService.updateUserInfo(currentUserId, updateRequest);
+            } catch (Exception e) {
+                // 如果数据库更新失败，删除刚刚上传的文件，避免产生垃圾文件
+                log.warn("更新用户头像数据库信息失败，尝试删除已上传文件: {}", avatarUrl);
+                avatarUploadUtil.deleteOldAvatar(avatarUrl);
+                throw e;
+            }
             
             // 删除旧头像文件（如果存在）
             if (oldAvatarUrl != null && !oldAvatarUrl.trim().isEmpty()) {

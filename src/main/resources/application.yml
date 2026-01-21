@@ -45,7 +45,7 @@ file:
   upload:
     avatar:
       path: D:\JetBrains\IdeaProjects\study\dailw\uploads\avatar
-      url-prefix: /uploads/avatar/
+      url-prefix: uploads/avatar/
       # 允许的文件扩展名
       allowed-extensions: jpg,jpeg,png,gif,bmp,webp
       # 允许的MIME类型

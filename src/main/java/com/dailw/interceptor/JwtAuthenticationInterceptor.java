@@ -78,13 +78,13 @@ public class JwtAuthenticationInterceptor implements HandlerInterceptor {
             // 验证Token有效性
             if (!jwtUtil.validateToken(token)) {
                 log.warn("Token验证失败: {}", request.getRequestURI());
-                throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "Token无效或已过期");
+                throw new BusinessException(ErrorCode.TOKEN_EXPIRED_ERROR, "Token无效或已过期");
             }
             
             // 检查Token是否过期
             if (jwtUtil.isTokenExpired(token)) {
                 log.warn("Token已过期: {}", request.getRequestURI());
-                throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "Token已过期，请重新登录");
+                throw new BusinessException(ErrorCode.TOKEN_EXPIRED_ERROR, "Token已过期，请重新登录");
             }
             
             // 从Token中提取用户信息
