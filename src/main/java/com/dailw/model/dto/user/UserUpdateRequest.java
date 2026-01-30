@@ -2,6 +2,8 @@ package com.dailw.model.dto.user;
 
 import lombok.Data;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -11,7 +13,10 @@ import java.util.Date;
  * @author trave
  */
 @Data
-public class UserUpdateRequest {
+public class UserUpdateRequest implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     /**
      * 昵称

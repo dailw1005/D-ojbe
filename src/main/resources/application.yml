@@ -5,7 +5,7 @@ spring:
     pathmatch:
       matching-strategy: path-pattern-parser
   profiles:
-    active: dev  # 默认激活开发环境
+    active: local  # 默认激活开发环境
   servlet:
     multipart:
       max-file-size: 5MB

@@ -2,6 +2,8 @@ package com.dailw.model.vo;
 
 import lombok.Data;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -9,7 +11,10 @@ import java.util.Date;
  * 用于返回用户信息，排除敏感字段
  */
 @Data
-public class UserVO {
+public class UserVO implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
     
     /**
      * 用户ID，主键

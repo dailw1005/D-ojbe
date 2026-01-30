@@ -1,0 +1,91 @@
+# 开发环境配置
+spring:
+  # 数据库配置 - 开发环境
+  datasource:
+    url: jdbc:mysql://localhost:3306/dailw
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 1005
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # Redis配置 - 开发环境
+  data:
+    redis:
+      database: 1
+      host: 115.190.96.40
+      port: 6379
+      timeout: 5000
+      password: W6!jF&k2#pL@
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+        shutdown-timeout: 100ms
+
+    #   Redis集群配置
+#    data:
+#      redis:
+#        timeout: 5000
+#        password: W6!jF&k2#pL@
+#        cluster:
+#          nodes:
+#            - 192.168.1.100:7000
+#            - 192.168.1.100:7001
+#            - 192.168.1.101:7000
+#            - 192.168.1.101:7001
+#            - 192.168.1.102:7000
+#            - 192.168.1.102:7001
+#          max-redirects: 3  # 最大重定向次数
+#        lettuce:
+#          pool:
+#            max-active: 16    # 连接池最大连接数
+#            max-idle: 8       # 连接池最大空闲连接数
+#            min-idle: 0       # 连接池最小空闲连接数
+#            max-wait: -1ms    # 连接池最大阻塞等待时间
+#          shutdown-timeout: 100ms
+#          cluster:
+#            refresh:
+#              adaptive: true  # 自适应集群拓扑刷新
+#              period: 30s     # 定期刷新集群拓扑间隔
+
+# 服务器配置 - 开发环境
+server:
+  address: 0.0.0.0
+  port: 8129
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
+
+# JWT配置 - 开发环境
+jwt:
+  secret: nH9QZ8+7LpX2Rk5mS7tA3fG8jK2pN5qR8tU1vX4sZ6wD9gB2hC5jE7kF9mH0pJ
+  access-token-expiration: 7200000    # 2小时 (毫秒)
+  refresh-token-expiration: 604800000 # 7天 (毫秒)
+
+# Actuator监控配置 - 开发环境
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,beans,configprops
+  endpoint:
+    health:
+      show-details: always
+  info:
+    env:
+      enabled: true
+
+# 日志配置 - 开发环境
+logging:
+  level:
+    com.dailw: DEBUG
+    org.springframework: INFO
+    org.mybatis: DEBUG
