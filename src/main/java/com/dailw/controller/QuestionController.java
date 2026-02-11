@@ -13,15 +13,15 @@ import com.dailw.interceptor.JwtAuthenticationInterceptor;
 import com.dailw.model.dto.question.QuestionAddRequest;
 import com.dailw.model.dto.question.QuestionQueryRequest;
 import com.dailw.model.dto.question.QuestionUpdateRequest;
+import com.dailw.model.entity.Question;
+import com.dailw.model.vo.QuestionInfoVO;
 import com.dailw.model.vo.QuestionVO;
 import com.dailw.service.interfaces.QuestionService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/question")
@@ -82,7 +82,6 @@ public class QuestionController {
     }
 
     @PostMapping("/query")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<QuestionVO>> queryQuestion(@RequestBody QuestionQueryRequest questionQueryRequest, HttpServletRequest request) {
 
         long current = questionQueryRequest.getCurrent();
@@ -91,5 +90,37 @@ public class QuestionController {
 
         Page<QuestionVO> result = questionService.queryByPage(current, size, questionQueryRequest);
         return ResultUtils.success(result);
+    }
+
+    @GetMapping("/query/vo/byId")
+    public BaseResponse<QuestionVO> queryQuestionVoById(long id, HttpServletRequest request) {
+
+        if (id <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        QuestionVO questionVo = questionService.queryQuestionVoById(id);
+        ThrowUtils.throwIf(questionVo == null, ErrorCode.NOT_FOUND_ERROR);
+        return ResultUtils.success(questionVo);
+    }
+
+    @GetMapping("/query/byId")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Question> queryQuestionById(long id, HttpServletRequest request) {
+
+        if (id <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        Question question = questionService.getById(id);
+        ThrowUtils.throwIf(question == null, ErrorCode.NOT_FOUND_ERROR);
+        return ResultUtils.success(question);
+    }
+
+    @GetMapping("/get/questionInfo")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<QuestionInfoVO> getQuestionInfo(HttpServletRequest request) {
+
+        QuestionInfoVO questionInfo = questionService.getQuestionInfo();
+        ThrowUtils.throwIf(questionInfo == null, ErrorCode.NOT_FOUND_ERROR);
+        return ResultUtils.success(questionInfo);
     }
 }

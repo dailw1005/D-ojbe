@@ -9,6 +9,7 @@ import com.dailw.exception.BusinessException;
 import com.dailw.exception.ThrowUtils;
 import com.dailw.model.dto.question.*;
 import com.dailw.model.entity.Question;
+import com.dailw.model.vo.QuestionInfoVO;
 import com.dailw.model.vo.QuestionVO;
 import com.dailw.service.interfaces.QuestionService;
 import com.dailw.mapper.QuestionMapper;
@@ -18,7 +19,10 @@ import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -32,6 +36,9 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
 
     @Resource
     private JsonUtil jsonUtil;
+
+    @Resource
+    private QuestionMapper questionMapper;
 
     @Override
     public Long add(Long currentUserId, QuestionAddRequest questionAddRequest) {
@@ -133,8 +140,10 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         String title = questionQueryRequest.getTitle();
         String content = questionQueryRequest.getContent();
         List<String> tags = questionQueryRequest.getTags();
+        String difficulty = questionQueryRequest.getDifficulty();
 
         queryWrapper.eq(id != null, "id", id);
+        queryWrapper.eq(StringUtils.isNotBlank(difficulty), "difficulty", difficulty);
         queryWrapper.like(StringUtils.isNotBlank(title), "title", title);
         queryWrapper.like(StringUtils.isNotBlank(content), "content", content);
 
@@ -167,6 +176,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
             questionVO.setTitle(question.getTitle());
             questionVO.setContent(question.getContent());
             questionVO.setTags(jsonUtil.fromJson(question.getTags(), new TypeReference<List<String>>() {}));
+            questionVO.setDifficulty(question.getDifficulty());
             questionVO.setSubmitNum(question.getSubmitNum());
             questionVO.setAcceptedNum(question.getAcceptedNum());
             questionVO.setJudgeConfig(jsonUtil.fromJson(question.getJudgeConfig(), JudgeConfig.class));
@@ -178,6 +188,28 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         Page<QuestionVO> result = new Page<>(current, size, page.getTotal());
         result.setRecords(records);
         return result;
+    }
+
+    @Override
+    public QuestionVO queryQuestionVoById(Long questionId) {
+        Question question = this.getById(questionId);
+        QuestionVO questionVO = new QuestionVO();
+        questionVO.setId(question.getId());
+        questionVO.setTitle(question.getTitle());
+        questionVO.setContent(question.getContent());
+        questionVO.setTags(jsonUtil.fromJson(question.getTags(), new TypeReference<List<String>>() {}));
+        questionVO.setDifficulty(question.getDifficulty());
+        questionVO.setSubmitNum(question.getSubmitNum());
+        questionVO.setAcceptedNum(question.getAcceptedNum());
+        questionVO.setJudgeConfig(jsonUtil.fromJson(question.getJudgeConfig(), JudgeConfig.class));
+        questionVO.setThumbNum(question.getThumbNum());
+        questionVO.setFavourNum(question.getFavourNum());
+        return questionVO;
+    }
+
+    @Override
+    public QuestionInfoVO getQuestionInfo() {
+        return questionMapper.selectQuestionInfo();
     }
 
     public void validQuestion(Question question, boolean add) {

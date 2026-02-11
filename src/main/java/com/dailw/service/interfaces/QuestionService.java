@@ -7,6 +7,7 @@ import com.dailw.model.dto.question.QuestionQueryRequest;
 import com.dailw.model.dto.question.QuestionUpdateRequest;
 import com.dailw.model.entity.Question;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.dailw.model.vo.QuestionInfoVO;
 import com.dailw.model.vo.QuestionVO;
 
 /**
@@ -23,5 +24,9 @@ public interface QuestionService extends IService<Question> {
     Boolean delete(Long currentUserId, Long questionId);
 
     Page<QuestionVO> queryByPage(Long current, Long size, QuestionQueryRequest questionQueryRequest);
+
+    QuestionVO queryQuestionVoById(Long questionId);
+
+    QuestionInfoVO getQuestionInfo();
 
 }

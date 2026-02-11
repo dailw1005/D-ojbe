@@ -31,4 +31,22 @@
         user_id,create_time,update_time,
         deleted
     </sql>
+
+    <select id="selectQuestionInfo" resultType="com.dailw.model.vo.QuestionInfoVO">
+        SELECT
+            COUNT(*) AS total,
+            SUM(CASE WHEN difficulty = 'easy' OR difficulty = '简单' THEN 1 ELSE 0 END) AS easyCount,
+            SUM(CASE WHEN difficulty = 'medium' OR difficulty = '中等' THEN 1 ELSE 0 END) AS mediumCount,
+            SUM(CASE WHEN difficulty = 'hard' OR difficulty = '困难' THEN 1 ELSE 0 END) AS hardCount,
+            COALESCE(SUM(submit_num), 0) AS submitCount,
+            COALESCE(SUM(accepted_num), 0) AS acceptedCount,
+            -- 直接在 SQL 中计算通过率（避免 Java 端计算）
+            CASE
+                WHEN SUM(submit_num) > 0 THEN ROUND((SUM(accepted_num) / SUM(submit_num)) * 100, 2)
+                ELSE 0
+                END AS passRate
+        FROM question
+        WHERE deleted = 0;
+    </select>
+
 </mapper>

@@ -2,6 +2,7 @@ package com.dailw.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.dailw.model.entity.Question;
+import com.dailw.model.vo.QuestionInfoVO;
 
 /**
 * @author trave
@@ -11,6 +12,7 @@ import com.dailw.model.entity.Question;
 */
 public interface QuestionMapper extends BaseMapper<Question> {
 
+    QuestionInfoVO selectQuestionInfo();
 }
 
 

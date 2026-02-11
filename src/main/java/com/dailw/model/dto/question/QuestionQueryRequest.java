@@ -39,4 +39,9 @@ public class QuestionQueryRequest extends PageRequest implements Serializable {
      */
     private List<String> tags;
 
+    /**
+     * 难度
+     */
+    private String difficulty;
+
 }

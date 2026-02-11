@@ -47,7 +47,8 @@ public class WebConfig implements WebMvcConfigurer {
                         // 错误页面
                         "/error",
                         // 头像上传路径
-                        "/uploads/avatar/**"
+                        "/uploads/avatar/**",
+                        "/question/query"
                 );
     }
     
