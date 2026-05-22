@@ -50,6 +50,11 @@ public class QuestionSolution {
     private Integer thumbNum;
 
     /**
+     * 浏览量
+     */
+    private Integer viewNum;
+
+    /**
      * 创建时间
      */
     private Date createTime;
@@ -83,6 +88,7 @@ public class QuestionSolution {
             && (this.getContent() == null ? other.getContent() == null : this.getContent().equals(other.getContent()))
             && (this.getTags() == null ? other.getTags() == null : this.getTags().equals(other.getTags()))
             && (this.getThumbNum() == null ? other.getThumbNum() == null : this.getThumbNum().equals(other.getThumbNum()))
+            && (this.getViewNum() == null ? other.getViewNum() == null : this.getViewNum().equals(other.getViewNum()))
             && (this.getCreateTime() == null ? other.getCreateTime() == null : this.getCreateTime().equals(other.getCreateTime()))
             && (this.getUpdateTime() == null ? other.getUpdateTime() == null : this.getUpdateTime().equals(other.getUpdateTime()))
             && (this.getDeleted() == null ? other.getDeleted() == null : this.getDeleted().equals(other.getDeleted()));
@@ -99,6 +105,7 @@ public class QuestionSolution {
         result = prime * result + ((getContent() == null) ? 0 : getContent().hashCode());
         result = prime * result + ((getTags() == null) ? 0 : getTags().hashCode());
         result = prime * result + ((getThumbNum() == null) ? 0 : getThumbNum().hashCode());
+        result = prime * result + ((getViewNum() == null) ? 0 : getViewNum().hashCode());
         result = prime * result + ((getCreateTime() == null) ? 0 : getCreateTime().hashCode());
         result = prime * result + ((getUpdateTime() == null) ? 0 : getUpdateTime().hashCode());
         result = prime * result + ((getDeleted() == null) ? 0 : getDeleted().hashCode());
@@ -118,6 +125,7 @@ public class QuestionSolution {
         sb.append(", content=").append(content);
         sb.append(", tags=").append(tags);
         sb.append(", thumbNum=").append(thumbNum);
+        sb.append(", viewNum=").append(viewNum);
         sb.append(", createTime=").append(createTime);
         sb.append(", updateTime=").append(updateTime);
         sb.append(", deleted=").append(deleted);

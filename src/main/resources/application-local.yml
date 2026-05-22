@@ -1,8 +1,12 @@
 # 开发环境配置
 spring:
+  # Kafka配置 - 本地环境
+  kafka:
+    bootstrap-servers: localhost:9092
+
   # 数据库配置 - 开发环境
   datasource:
-    url: jdbc:mysql://localhost:3306/dailw
+    url: jdbc:mysql://172.20.10.2:3306/dailw
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: 1005
@@ -17,10 +21,10 @@ spring:
   data:
     redis:
       database: 1
-      host: 115.190.96.40
+      host: 172.20.10.2
       port: 6379
-      timeout: 5000
-      password: W6!jF&k2#pL@
+      timeout: 50000
+      password: 1005
       lettuce:
         pool:
           max-active: 8
@@ -30,30 +34,31 @@ spring:
         shutdown-timeout: 100ms
 
     #   Redis集群配置
-#    data:
-#      redis:
-#        timeout: 5000
-#        password: W6!jF&k2#pL@
+#  data:
+#    redis:
+#      timeout: 5000
+#      password: 123456
+#      cluster:
+#        nodes:
+#          - 172.28.241.209:7000
+#          - 172.28.241.209:7001
+#          - 172.28.241.209:7002
+#          - 172.28.241.209:7003
+#          - 172.28.241.209:7004
+#          - 172.28.241.209:7005
+#          - 172.28.241.209:7006
+#        max-redirects: 3  # 最大重定向次数
+#      lettuce:
+#        pool:
+#          max-active: 16    # 连接池最大连接数
+#          max-idle: 8       # 连接池最大空闲连接数
+#          min-idle: 0       # 连接池最小空闲连接数
+#          max-wait: -1ms    # 连接池最大阻塞等待时间
+#        shutdown-timeout: 100ms
 #        cluster:
-#          nodes:
-#            - 192.168.1.100:7000
-#            - 192.168.1.100:7001
-#            - 192.168.1.101:7000
-#            - 192.168.1.101:7001
-#            - 192.168.1.102:7000
-#            - 192.168.1.102:7001
-#          max-redirects: 3  # 最大重定向次数
-#        lettuce:
-#          pool:
-#            max-active: 16    # 连接池最大连接数
-#            max-idle: 8       # 连接池最大空闲连接数
-#            min-idle: 0       # 连接池最小空闲连接数
-#            max-wait: -1ms    # 连接池最大阻塞等待时间
-#          shutdown-timeout: 100ms
-#          cluster:
-#            refresh:
-#              adaptive: true  # 自适应集群拓扑刷新
-#              period: 30s     # 定期刷新集群拓扑间隔
+#          refresh:
+#            adaptive: true  # 自适应集群拓扑刷新
+#            period: 30s     # 定期刷新集群拓扑间隔
 
 # 服务器配置 - 开发环境
 server:

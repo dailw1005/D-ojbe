@@ -1,5 +1,14 @@
 # 开发环境配置
+
+# CORS配置 - 开发环境
+cors:
+  allowed-origins: http://localhost:5173,http://127.0.0.1:5173
+
 spring:
+  # Kafka配置 - 开发环境
+  kafka:
+    bootstrap-servers: 115.190.96.40:9092
+
   # 数据库配置 - 开发环境
   datasource:
     url: jdbc:mysql://115.190.96.40:3306/dailw

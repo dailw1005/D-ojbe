@@ -1,6 +1,7 @@
 package com.dailw.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.dailw.common.ErrorCode;
@@ -135,22 +136,22 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
 
-        QueryWrapper<Question> queryWrapper = new QueryWrapper<>();
+        LambdaQueryWrapper<Question> queryWrapper = Wrappers.lambdaQuery();
         Long id = questionQueryRequest.getId();
         String title = questionQueryRequest.getTitle();
         String content = questionQueryRequest.getContent();
         List<String> tags = questionQueryRequest.getTags();
         String difficulty = questionQueryRequest.getDifficulty();
 
-        queryWrapper.eq(id != null, "id", id);
-        queryWrapper.eq(StringUtils.isNotBlank(difficulty), "difficulty", difficulty);
-        queryWrapper.like(StringUtils.isNotBlank(title), "title", title);
-        queryWrapper.like(StringUtils.isNotBlank(content), "content", content);
+        queryWrapper.eq(id != null, Question::getId, id);
+        queryWrapper.eq(StringUtils.isNotBlank(difficulty), Question::getDifficulty, difficulty);
+        queryWrapper.like(StringUtils.isNotBlank(title), Question::getTitle, title);
+        queryWrapper.like(StringUtils.isNotBlank(content), Question::getContent, content);
 
         if (tags != null && !tags.isEmpty()) {
             for (String tag : tags) {
                 if (StringUtils.isNotBlank(tag)) {
-                    queryWrapper.like("tags", tag);
+                    queryWrapper.like(Question::getTags, tag);
                 }
             }
         }
@@ -160,13 +161,19 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         if (StringUtils.isNotBlank(sortField) && sortField.matches("[a-zA-Z0-9_]+")) {
             boolean isAsc = CommonConstant.SORT_ORDER_ASC.equals(sortOrder);
             boolean isDesc = CommonConstant.SORT_ORDER_DESC.trim().equals(sortOrder);
+            
+            // 确保将前端传来的驼峰字段转换为下划线数据库字段
+            String dbSortField = com.baomidou.mybatisplus.core.toolkit.StringUtils.camelToUnderline(sortField);
+            
+            // 对于动态字段排序，LambdaQueryWrapper 不支持直接传字符串，我们需要回退到普通的 QueryWrapper 写法，或者通过反射。
+            // 最简单的办法是利用 last() 拼接
             if (isAsc) {
-                queryWrapper.orderByAsc(sortField);
+                queryWrapper.last("ORDER BY " + dbSortField + " ASC");
             } else if (isDesc) {
-                queryWrapper.orderByDesc(sortField);
+                queryWrapper.last("ORDER BY " + dbSortField + " DESC");
             }
         } else {
-            queryWrapper.orderByDesc("id");
+            queryWrapper.orderByDesc(Question::getId);
         }
 
         Page<Question> page = this.page(new Page<>(current, size), queryWrapper);

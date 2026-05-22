@@ -2,6 +2,7 @@ package com.dailw.config;
 
 import com.dailw.interceptor.JwtAuthenticationInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -52,22 +53,24 @@ public class WebConfig implements WebMvcConfigurer {
                 );
     }
     
+    @Value("${cors.allowed-origins:http://localhost:5173}")
+    private String allowedOriginsConfig;
+
     /**
      * 配置跨域请求处理
      * 允许前端应用访问后端API
+     *
+     * 注意：当 allowCredentials(true) 时，allowedOriginPatterns 不能使用 "*"，
+     * 必须指定具体的源地址列表，否则浏览器会拒绝跨域请求。
      */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
+        String[] allowedOrigins = allowedOriginsConfig.split(",");
         registry.addMapping("/**")
-                // 允许的源地址
-                .allowedOriginPatterns("*")
-                // 允许的HTTP方法
+                .allowedOriginPatterns(allowedOrigins)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                // 允许的请求头
                 .allowedHeaders("*")
-                // 是否允许发送Cookie
                 .allowCredentials(true)
-                // 预检请求的缓存时间（秒）
                 .maxAge(3600);
     }
 }

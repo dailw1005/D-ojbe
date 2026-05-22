@@ -12,6 +12,7 @@
             <result property="content" column="content" jdbcType="VARCHAR"/>
             <result property="tags" column="tags" jdbcType="VARCHAR"/>
             <result property="thumbNum" column="thumb_num" jdbcType="INTEGER"/>
+            <result property="viewNum" column="view_num" jdbcType="INTEGER"/>
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
             <result property="deleted" column="deleted" jdbcType="TINYINT"/>
@@ -20,7 +21,7 @@
     <sql id="Base_Column_List">
         id,question_id,user_id,
         title,content,tags,
-        thumb_num,create_time,update_time,
+        thumb_num,view_num,create_time,update_time,
         deleted
     </sql>
 </mapper>
