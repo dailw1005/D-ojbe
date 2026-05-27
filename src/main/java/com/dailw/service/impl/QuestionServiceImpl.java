@@ -18,12 +18,11 @@ import com.dailw.utils.JsonUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -42,6 +41,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
     private QuestionMapper questionMapper;
 
     @Override
+    @CacheEvict(value = {"questionPage", "questionInfo"}, allEntries = true)
     public Long add(Long currentUserId, QuestionAddRequest questionAddRequest) {
 
         if (questionAddRequest == null) {
@@ -72,6 +72,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
     }
 
     @Override
+    @CacheEvict(value = {"question", "questionPage", "questionInfo"}, allEntries = true)
     public Boolean update(Long currentUserId, QuestionUpdateRequest questionUpdateRequest) {
         if (questionUpdateRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -94,21 +95,15 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         question.setJudgeCase(jsonUtil.toJson(judgeCase));
 
         this.validQuestion(question, true);
-        long id = questionUpdateRequest.getId();
-        // 判断是否存在
-        Question oldQuestion = this.getById(id);
-        ThrowUtils.throwIf(oldQuestion == null, ErrorCode.NOT_FOUND_ERROR);
         boolean result = this.updateById(question);
         if (!result) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR);
-        } else {
-            // TODO 需要确保redis中的数据修改
-            //redisService.setValue("question:" + id, question);
-            return true;
         }
+        return true;
     }
 
     @Override
+    @CacheEvict(value = {"question", "questionPage", "questionInfo"}, allEntries = true)
     public Boolean delete(Long currentUserId, Long questionId) {
 
         if (questionId == null) {
@@ -122,15 +117,12 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         boolean result = this.removeById(questionId);
         if (!result) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR);
-        } else {
-            // TODO 需要确保数据从redis中删除
-            // 1、重试机制
-            // 2、使用消息队列来确保从redis中删除
-            return true;
         }
+        return true;
     }
 
     @Override
+    @Cacheable(value = "questionPage", key = "#current + '_' + #size + '_' + #questionQueryRequest.hashCode()")
     public Page<QuestionVO> queryByPage(Long current, Long size, QuestionQueryRequest questionQueryRequest) {
         if (questionQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -156,21 +148,29 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
             }
         }
 
+        // 白名单排序：只允许对指定字段排序，使用 MyBatis-Plus lambda 方法引用
         String sortField = questionQueryRequest.getSortField();
         String sortOrder = questionQueryRequest.getSortOrder();
-        if (StringUtils.isNotBlank(sortField) && sortField.matches("[a-zA-Z0-9_]+")) {
+        if (StringUtils.isNotBlank(sortField) && StringUtils.isNotBlank(sortOrder)) {
             boolean isAsc = CommonConstant.SORT_ORDER_ASC.equals(sortOrder);
-            boolean isDesc = CommonConstant.SORT_ORDER_DESC.trim().equals(sortOrder);
-            
-            // 确保将前端传来的驼峰字段转换为下划线数据库字段
-            String dbSortField = com.baomidou.mybatisplus.core.toolkit.StringUtils.camelToUnderline(sortField);
-            
-            // 对于动态字段排序，LambdaQueryWrapper 不支持直接传字符串，我们需要回退到普通的 QueryWrapper 写法，或者通过反射。
-            // 最简单的办法是利用 last() 拼接
-            if (isAsc) {
-                queryWrapper.last("ORDER BY " + dbSortField + " ASC");
-            } else if (isDesc) {
-                queryWrapper.last("ORDER BY " + dbSortField + " DESC");
+            switch (sortField) {
+                case "submitNum":
+                    queryWrapper.orderBy(true, isAsc, Question::getSubmitNum);
+                    break;
+                case "acceptedNum":
+                    queryWrapper.orderBy(true, isAsc, Question::getAcceptedNum);
+                    break;
+                case "createTime":
+                    queryWrapper.orderBy(true, isAsc, Question::getCreateTime);
+                    break;
+                case "difficulty":
+                    queryWrapper.orderBy(true, isAsc, Question::getDifficulty);
+                    break;
+                case "title":
+                    queryWrapper.orderBy(true, isAsc, Question::getTitle);
+                    break;
+                default:
+                    queryWrapper.orderByDesc(Question::getId);
             }
         } else {
             queryWrapper.orderByDesc(Question::getId);
@@ -198,6 +198,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
     }
 
     @Override
+    @Cacheable(value = "question", key = "#questionId")
     public QuestionVO queryQuestionVoById(Long questionId) {
         Question question = this.getById(questionId);
         QuestionVO questionVO = new QuestionVO();
@@ -215,6 +216,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
     }
 
     @Override
+    @Cacheable(value = "questionInfo", key = "'overview'")
     public QuestionInfoVO getQuestionInfo() {
         return questionMapper.selectQuestionInfo();
     }

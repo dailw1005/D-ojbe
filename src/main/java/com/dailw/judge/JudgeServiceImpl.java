@@ -111,7 +111,7 @@ public class JudgeServiceImpl implements JudgeService {
             // 处理沙箱调用异常，将状态更新为失败
             questionSubmitUpdate.setStatus(QuestionSubmitStatusEnum.SYSTEM_ERROR.getValue());
             JudgeInfo errorJudgeInfo = new JudgeInfo();
-            errorJudgeInfo.setMessage(e.getMessage());
+            errorJudgeInfo.setMessage("判题服务暂时不可用，请稍后重试");
             questionSubmitUpdate.setJudgeInfo(StaticJsonUtil.toJsonStr(errorJudgeInfo));
             questionSubmitService.updateById(questionSubmitUpdate);
             return questionSubmitService.getById(questionSubmitId);

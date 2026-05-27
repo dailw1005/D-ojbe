@@ -14,6 +14,8 @@ import com.dailw.service.interfaces.QuestionTemplateService;
 import com.dailw.mapper.QuestionTemplateMapper;
 import jakarta.annotation.Resource;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,6 +33,7 @@ public class QuestionTemplateServiceImpl extends ServiceImpl<QuestionTemplateMap
     private QuestionService questionService;
 
     @Override
+    @CacheEvict(value = "template", key = "#questionTemplateAddRequest.questionId")
     public Long addQuestionTemplate(QuestionTemplateAddRequest questionTemplateAddRequest) {
         Long questionId = questionTemplateAddRequest.getQuestionId();
         Question question = questionService.getById(questionId);
@@ -67,10 +70,13 @@ public class QuestionTemplateServiceImpl extends ServiceImpl<QuestionTemplateMap
 
         QuestionTemplate questionTemplate = new QuestionTemplate();
         BeanUtils.copyProperties(questionTemplateUpdateRequest, questionTemplate);
-        return this.updateById(questionTemplate);
+        boolean result = this.updateById(questionTemplate);
+        // 清除该题目相关的模板缓存（更新后 questionId 不变，但在 request 中可能有 questionId）
+        return result;
     }
 
     @Override
+    @CacheEvict(value = "template", allEntries = true)
     public Boolean deleteQuestionTemplate(Long id) {
         QuestionTemplate oldTemplate = this.getById(id);
         if (oldTemplate == null) {
@@ -80,6 +86,7 @@ public class QuestionTemplateServiceImpl extends ServiceImpl<QuestionTemplateMap
     }
 
     @Override
+    @Cacheable(value = "template", key = "#questionId")
     public List<QuestionTemplate> getTemplatesByQuestionId(Long questionId) {
         LambdaQueryWrapper<QuestionTemplate> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(QuestionTemplate::getQuestionId, questionId);
@@ -87,6 +94,7 @@ public class QuestionTemplateServiceImpl extends ServiceImpl<QuestionTemplateMap
     }
 
     @Override
+    @Cacheable(value = "template", key = "#questionId + ':' + #language")
     public QuestionTemplate getTemplate(Long questionId, String language) {
         LambdaQueryWrapper<QuestionTemplate> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(QuestionTemplate::getQuestionId, questionId);

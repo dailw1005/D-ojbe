@@ -12,9 +12,11 @@ import com.dailw.model.dto.questionsolution.QuestionSolutionAddRequest;
 import com.dailw.model.dto.questionsolution.QuestionSolutionQueryRequest;
 import com.dailw.model.dto.questionsolution.QuestionSolutionUpdateRequest;
 import com.dailw.model.vo.QuestionSolutionVO;
+import com.dailw.model.vo.SolutionStatsVO;
 import com.dailw.model.vo.UserVO;
 import com.dailw.service.interfaces.QuestionSolutionService;
 import com.dailw.service.interfaces.UserService;
+import com.dailw.utils.JwtUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +25,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import java.util.Map;
 
 /**
  * 题解接口
@@ -38,6 +39,27 @@ public class QuestionSolutionController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private JwtUtil jwtUtil;
+
+    /**
+     * 从请求中尝试提取用户ID（不强制要求登录），用于公开读接口的 hasLiked 判断
+     */
+    private Long getOptionalUserId(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                String token = authHeader.substring(7);
+                if (jwtUtil.validateToken(token) && !jwtUtil.isTokenExpired(token)) {
+                    return jwtUtil.getUserIdFromToken(token);
+                }
+            } catch (Exception e) {
+                log.debug("Optional auth extraction failed: {}", e.getMessage());
+            }
+        }
+        return null;
+    }
 
     /**
      * 创建题解
@@ -95,11 +117,25 @@ public class QuestionSolutionController {
      * 分页获取题解列表
      */
     @PostMapping("/list/page")
-    public BaseResponse<Page<QuestionSolutionVO>> listQuestionSolutionByPage(@RequestBody QuestionSolutionQueryRequest questionSolutionQueryRequest) {
+    public BaseResponse<Page<QuestionSolutionVO>> listQuestionSolutionByPage(@RequestBody QuestionSolutionQueryRequest questionSolutionQueryRequest, HttpServletRequest request) {
         if (questionSolutionQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        Page<QuestionSolutionVO> result = questionSolutionService.getQuestionSolutionVOPage(questionSolutionQueryRequest);
+        Long currentUserId = getOptionalUserId(request);
+        Page<QuestionSolutionVO> result = questionSolutionService.getQuestionSolutionVOPage(questionSolutionQueryRequest, currentUserId);
+        return ResultUtils.success(result);
+    }
+
+    /**
+     * 根据ID获取题解详情
+     */
+    @GetMapping("/get")
+    public BaseResponse<QuestionSolutionVO> getQuestionSolutionById(Long id, HttpServletRequest request) {
+        if (id == null || id <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        Long currentUserId = getOptionalUserId(request);
+        QuestionSolutionVO result = questionSolutionService.getQuestionSolutionVOById(id, currentUserId);
         return ResultUtils.success(result);
     }
 
@@ -123,11 +159,12 @@ public class QuestionSolutionController {
      * 增加题解浏览量
      */
     @PostMapping("/view")
-    public BaseResponse<Boolean> viewQuestionSolution(Long id) {
+    public BaseResponse<Boolean> viewQuestionSolution(Long id, HttpServletRequest request) {
         if (id == null || id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        Boolean result = questionSolutionService.viewQuestionSolution(id);
+        Long currentUserId = getOptionalUserId(request);
+        Boolean result = questionSolutionService.viewQuestionSolution(id, currentUserId);
         return ResultUtils.success(result);
     }
 
@@ -135,18 +172,18 @@ public class QuestionSolutionController {
      * 获取当前登录用户的题解统计
      */
     @GetMapping("/user/count")
-    public BaseResponse<Map<String, Long>> getUserSolutionStats(HttpServletRequest request) {
+    public BaseResponse<SolutionStatsVO> getUserSolutionStats(HttpServletRequest request) {
         Long currentUserId = JwtAuthenticationInterceptor.getCurrentUserId(request);
         if (currentUserId == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
-        Map<String, Long> statsMap = questionSolutionService.getUserSolutionStats(currentUserId);
-        return ResultUtils.success(statsMap);
+        SolutionStatsVO stats = questionSolutionService.getUserSolutionStats(currentUserId);
+        return ResultUtils.success(stats);
     }
 
     @GetMapping("/total/count")
-    public BaseResponse<Map<String, Long>> getTotalSolutionStats() {
-        Map<String, Long> statsMap = questionSolutionService.getTotalSolutionStats();
-        return ResultUtils.success(statsMap);
+    public BaseResponse<SolutionStatsVO> getTotalSolutionStats() {
+        SolutionStatsVO stats = questionSolutionService.getTotalSolutionStats();
+        return ResultUtils.success(stats);
     }
 }

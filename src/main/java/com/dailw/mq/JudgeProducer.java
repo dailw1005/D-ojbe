@@ -21,7 +21,17 @@ public class JudgeProducer {
      * @param questionSubmitId 提交的题目 ID
      */
     public void sendMessage(String questionSubmitId) {
-        log.info("准备发送判题消息，提交 ID：{}", questionSubmitId);
-        kafkaTemplate.send("judge_topic", questionSubmitId);
+        log.info("发送判题消息，提交 ID：{}", questionSubmitId);
+        kafkaTemplate.send("judge_topic", questionSubmitId)
+                .whenComplete((result, ex) -> {
+                    if (ex != null) {
+                        log.error("判题消息发送失败，提交 ID：{}", questionSubmitId, ex);
+                    } else {
+                        log.info("判题消息发送成功，提交 ID：{}, offset: {}",
+                                questionSubmitId,
+                                result != null && result.getRecordMetadata() != null
+                                        ? result.getRecordMetadata().offset() : "unknown");
+                    }
+                });
     }
 }

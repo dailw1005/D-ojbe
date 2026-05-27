@@ -1,6 +1,10 @@
 spring:
   application:
     name: dailw
+  cache:
+    type: redis
+    redis:
+      cache-null-values: false
   mvc:
     pathmatch:
       matching-strategy: path-pattern-parser
@@ -10,6 +14,7 @@ spring:
     # bootstrap-servers 按环境在 application-*.yml 中分别配置
     producer:
       retries: 3
+      acks: all
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       batch-size: 16384
@@ -18,11 +23,11 @@ spring:
         linger.ms: 5
     consumer:
       group-id: judge-group
-      enable-auto-commit: true
-      auto-commit-interval: 1000
+      enable-auto-commit: false
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       auto-offset-reset: earliest
+      max-poll-interval-ms: 600000
     listener:
       concurrency: 3
   servlet:
@@ -53,7 +58,7 @@ springdoc:
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
   global-config:
     db-config:
       logic-delete-field: deleted # 全局逻辑删除的实体字段名
@@ -68,7 +73,7 @@ jwt:
 file:
   upload:
     avatar:
-      path: D:\JetBrains\IdeaProjects\study\dailw\uploads\avatar\
+      path: ./uploads/avatar/
       url-prefix: uploads/avatar/
       # 允许的文件扩展名
       allowed-extensions: jpg,jpeg,png,gif,bmp,webp
@@ -77,9 +82,26 @@ file:
       # 最大文件大小（字节）
       max-file-size: 5242880
 
+# 登录限流配置
+rate-limit:
+  login:
+    max-attempts: 10
+    window-seconds: 60
+
 # 代码沙箱配置
 dailw:
   codesandbox:
-    url: http://172.20.10.2:9119/judge
+    url: http://10.73.128.27:9119/judge
 
-  
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    tags:
+      application: D-ojbe
+  prometheus:
+    metrics:
+      export:
+        enabled: true

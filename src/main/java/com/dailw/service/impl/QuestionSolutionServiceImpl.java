@@ -15,19 +15,22 @@ import com.dailw.model.entity.Question;
 import com.dailw.model.entity.QuestionSolution;
 import com.dailw.model.entity.User;
 import com.dailw.model.vo.QuestionSolutionVO;
+import com.dailw.model.vo.SolutionStatsVO;
 import com.dailw.model.vo.UserSimpleVO;
 import com.dailw.service.interfaces.QuestionService;
 import com.dailw.service.interfaces.QuestionSolutionService;
+import com.dailw.service.interfaces.RedisService;
 import com.dailw.mapper.QuestionSolutionMapper;
 import com.dailw.service.interfaces.UserService;
 import com.dailw.utils.StaticJsonUtil;
 import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -45,7 +48,11 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
     @Resource
     private UserService userService;
 
+    @Resource
+    private RedisService redisService;
+
     @Override
+    @CacheEvict(value = "solutionStats", allEntries = true)
     public Long addQuestionSolution(QuestionSolutionAddRequest questionSolutionAddRequest, Long userId) {
         QuestionSolution questionSolution = new QuestionSolution();
         BeanUtils.copyProperties(questionSolutionAddRequest, questionSolution);
@@ -94,6 +101,7 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
     }
 
     @Override
+    @CacheEvict(value = "solutionStats", allEntries = true)
     public Boolean deleteQuestionSolution(Long id, Long userId, boolean isAdmin) {
         QuestionSolution oldSolution = this.getById(id);
         if (oldSolution == null) {
@@ -108,10 +116,10 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
     }
 
     @Override
-    public Page<QuestionSolutionVO> getQuestionSolutionVOPage(QuestionSolutionQueryRequest questionSolutionQueryRequest) {
+    public Page<QuestionSolutionVO> getQuestionSolutionVOPage(QuestionSolutionQueryRequest questionSolutionQueryRequest, Long currentUserId) {
         long current = questionSolutionQueryRequest.getCurrent();
         long size = questionSolutionQueryRequest.getPageSize();
-        
+
         LambdaQueryWrapper<QuestionSolution> queryWrapper = Wrappers.lambdaQuery();
         Long id = questionSolutionQueryRequest.getId();
         Long questionId = questionSolutionQueryRequest.getQuestionId();
@@ -126,13 +134,13 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
         queryWrapper.eq(questionId != null, QuestionSolution::getQuestionId, questionId);
         queryWrapper.eq(userId != null, QuestionSolution::getUserId, userId);
         queryWrapper.like(StringUtils.isNotBlank(title), QuestionSolution::getTitle, title);
-        
+
         if (CollUtil.isNotEmpty(tags)) {
             for (String tag : tags) {
                 queryWrapper.like(QuestionSolution::getTags, "\"" + tag + "\"");
             }
         }
-        
+
         // 排序逻辑：支持按最新（时间）、最热（点赞最多）、最多浏览排序
         if (StringUtils.isNotBlank(sortField) && StringUtils.isNotBlank(sortOrder)) {
             boolean isAsc = com.dailw.constant.CommonConstant.SORT_ORDER_ASC.equals(sortOrder);
@@ -151,8 +159,32 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
         }
 
         Page<QuestionSolution> questionSolutionPage = this.page(new Page<>(current, size), queryWrapper);
-        
-        List<QuestionSolutionVO> questionSolutionVOList = questionSolutionPage.getRecords().stream().map(questionSolution -> {
+        List<QuestionSolution> records = questionSolutionPage.getRecords();
+
+        // 批量查询关联题目信息
+        Set<Long> questionIds = records.stream()
+                .map(QuestionSolution::getQuestionId)
+                .collect(Collectors.toSet());
+        Map<Long, Question> questionMap = Collections.emptyMap();
+        if (!questionIds.isEmpty()) {
+            questionMap = questionService.listByIds(questionIds).stream()
+                    .collect(Collectors.toMap(Question::getId, q -> q));
+        }
+
+        // 批量查询当前用户点赞状态
+        Set<String> likedSolutionIds = new HashSet<>();
+        if (currentUserId != null && !records.isEmpty()) {
+            String userIdStr = currentUserId.toString();
+            for (QuestionSolution s : records) {
+                String redisKey = "thumb:solution:" + s.getId();
+                if (Boolean.TRUE.equals(redisService.sIsMember(redisKey, userIdStr))) {
+                    likedSolutionIds.add(s.getId().toString());
+                }
+            }
+        }
+
+        final Map<Long, Question> finalQuestionMap = questionMap;
+        List<QuestionSolutionVO> questionSolutionVOList = records.stream().map(questionSolution -> {
             QuestionSolutionVO questionSolutionVO = QuestionSolutionVO.objToVo(questionSolution);
             User user = userService.getById(questionSolution.getUserId());
             if (user != null) {
@@ -163,35 +195,101 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
                 userVO.setBirthday(user.getBirthday());
                 questionSolutionVO.setUserVO(userVO);
             }
+            // 填充题目信息
+            Question question = finalQuestionMap.get(questionSolution.getQuestionId());
+            if (question != null) {
+                questionSolutionVO.setQuestionTitle(question.getTitle());
+                questionSolutionVO.setDifficulty(question.getDifficulty());
+            }
+            // 填充点赞状态
+            questionSolutionVO.setHasLiked(likedSolutionIds.contains(questionSolution.getId().toString()));
             return questionSolutionVO;
         }).collect(Collectors.toList());
 
         Page<QuestionSolutionVO> questionSolutionVOPage = new Page<>(questionSolutionPage.getCurrent(), questionSolutionPage.getSize(), questionSolutionPage.getTotal());
         questionSolutionVOPage.setRecords(questionSolutionVOList);
-        
+
         return questionSolutionVOPage;
     }
 
     @Override
-    public Boolean thumbQuestionSolution(Long id, Long userId) {
-        // 这里可以使用 Redis 实现防重复点赞，这里简化处理直接加 1
+    public QuestionSolutionVO getQuestionSolutionVOById(Long id, Long currentUserId) {
         QuestionSolution questionSolution = this.getById(id);
         if (questionSolution == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "题解不存在");
         }
-        
-        return this.update()
-                .setSql("thumb_num = thumb_num + 1")
-                .eq("id", id)
-                .update();
+        QuestionSolutionVO vo = QuestionSolutionVO.objToVo(questionSolution);
+
+        // 填充用户信息
+        User user = userService.getById(questionSolution.getUserId());
+        if (user != null) {
+            UserSimpleVO userVO = new UserSimpleVO();
+            userVO.setAvatar(user.getAvatar());
+            userVO.setNickname(user.getNickname());
+            userVO.setGender(user.getGender());
+            userVO.setBirthday(user.getBirthday());
+            vo.setUserVO(userVO);
+        }
+
+        // 填充题目信息
+        Question question = questionService.getById(questionSolution.getQuestionId());
+        if (question != null) {
+            vo.setQuestionTitle(question.getTitle());
+            vo.setDifficulty(question.getDifficulty());
+        }
+
+        // 填充点赞状态
+        if (currentUserId != null) {
+            String redisKey = "thumb:solution:" + id;
+            vo.setHasLiked(Boolean.TRUE.equals(redisService.sIsMember(redisKey, currentUserId.toString())));
+        } else {
+            vo.setHasLiked(false);
+        }
+
+        return vo;
     }
 
     @Override
-    public Boolean viewQuestionSolution(Long id) {
+    public Boolean thumbQuestionSolution(Long id, Long userId) {
         QuestionSolution questionSolution = this.getById(id);
         if (questionSolution == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "题解不存在");
         }
+
+        String redisKey = "thumb:solution:" + id;
+        String userIdStr = userId.toString();
+
+        if (Boolean.TRUE.equals(redisService.sIsMember(redisKey, userIdStr))) {
+            redisService.sRemove(redisKey, userIdStr);
+            return this.update()
+                    .setSql("thumb_num = thumb_num - 1")
+                    .eq("id", id)
+                    .update();
+        } else {
+            redisService.sAdd(redisKey, userIdStr);
+            return this.update()
+                    .setSql("thumb_num = thumb_num + 1")
+                    .eq("id", id)
+                    .update();
+        }
+    }
+
+    @Override
+    public Boolean viewQuestionSolution(Long id, Long userId) {
+        QuestionSolution questionSolution = this.getById(id);
+        if (questionSolution == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "题解不存在");
+        }
+
+        if (userId != null) {
+            String redisKey = "view:solution:" + id;
+            String userIdStr = userId.toString();
+            if (Boolean.TRUE.equals(redisService.sIsMember(redisKey, userIdStr))) {
+                return true;
+            }
+            redisService.sAdd(redisKey, userIdStr);
+        }
+
         return this.update()
                 .setSql("view_num = view_num + 1")
                 .eq("id", id)
@@ -199,7 +297,8 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
     }
 
     @Override
-    public Map<String, Long> getUserSolutionStats(Long userId) {
+    @Cacheable(value = "solutionStats", key = "#userId")
+    public SolutionStatsVO getUserSolutionStats(Long userId) {
         LambdaQueryWrapper<QuestionSolution> countQueryWrapper = Wrappers.lambdaQuery();
         countQueryWrapper.eq(QuestionSolution::getUserId, userId);
         long solutionCount = this.count(countQueryWrapper);
@@ -221,15 +320,12 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
                 viewCount = ((Number) viewCountObj).longValue();
             }
         }
-        return Map.of(
-                "solutionCount", solutionCount,
-                "thumbCount", thumbCount,
-                "viewCount", viewCount
-        );
+        return new SolutionStatsVO(solutionCount, thumbCount, viewCount);
     }
 
     @Override
-    public Map<String, Long> getTotalSolutionStats() {
+    @Cacheable(value = "solutionStats", key = "'total'")
+    public SolutionStatsVO getTotalSolutionStats() {
         long solutionCount = this.count();
         QueryWrapper<QuestionSolution> sumQueryWrapper = new QueryWrapper<>();
         sumQueryWrapper.select("COALESCE(SUM(thumb_num), 0) AS thumbCount", "COALESCE(SUM(view_num), 0) AS viewCount");
@@ -246,11 +342,7 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
                 viewCount = ((Number) viewCountObj).longValue();
             }
         }
-        return Map.of(
-                "solutionCount", solutionCount,
-                "thumbCount", thumbCount,
-                "viewCount", viewCount
-        );
+        return new SolutionStatsVO(solutionCount, thumbCount, viewCount);
     }
 }
 

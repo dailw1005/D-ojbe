@@ -71,6 +71,21 @@ public class QuestionSolutionVO implements Serializable {
      */
     private UserSimpleVO userVO;
 
+    /**
+     * 当前用户是否已点赞
+     */
+    private Boolean hasLiked;
+
+    /**
+     * 关联题目标题
+     */
+    private String questionTitle;
+
+    /**
+     * 关联题目难度
+     */
+    private String difficulty;
+
     private static final long serialVersionUID = 1L;
 
     /**

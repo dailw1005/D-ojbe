@@ -14,6 +14,8 @@ import com.dailw.model.vo.UserVO;
 import com.dailw.mapper.UserMapper;
 import com.dailw.utils.PasswordUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -103,6 +105,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
+    @Cacheable(value = "userInfo", key = "#userId")
     public UserVO getLoginUser(Long userId) {
         User user = this.getById(userId);
         if (user == null) {
@@ -119,6 +122,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
+    @CacheEvict(value = "userInfo", key = "#userId")
     public UserVO updateUserInfo(Long userId, UserUpdateRequest userUpdateRequest) {
         // 校验参数
         if (userId == null) {
@@ -168,6 +172,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
     
     @Override
+    @CacheEvict(value = "userInfo", key = "#userId")
     public boolean changePassword(Long userId, ChangePasswordRequest changePasswordRequest) {
         // 校验参数
         if (userId == null) {

@@ -19,6 +19,8 @@ import com.dailw.mapper.QuestionSubmitMapper;
 import com.dailw.mq.JudgeProducer;
 import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -40,6 +42,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
     private JudgeProducer judgeProducer;
 
     @Override
+    @CacheEvict(value = "submitStats", key = "#userId + ':submit'")
     public Long doQuestionSubmit(QuestionSubmitAddRequest questionSubmitAddRequest, Long userId) {
         // 校验编程语言是否合法
         String language = questionSubmitAddRequest.getLanguage();
@@ -103,6 +106,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
     }
 
     @Override
+    @Cacheable(value = "submitStats", key = "#userId + ':submit'")
     public long getUserSubmitCount(Long userId) {
         LambdaQueryWrapper<QuestionSubmit> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(QuestionSubmit::getUserId, userId);
@@ -110,6 +114,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
     }
 
     @Override
+    @Cacheable(value = "submitStats", key = "#userId + ':accepted'")
     public long getUserAcceptedCount(Long userId) {
         LambdaQueryWrapper<QuestionSubmit> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(QuestionSubmit::getUserId, userId);

@@ -1,6 +1,7 @@
 package com.dailw.config;
 
 import com.dailw.interceptor.JwtAuthenticationInterceptor;
+import com.dailw.interceptor.RateLimitInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -19,9 +20,15 @@ public class WebConfig implements WebMvcConfigurer {
     
     @Autowired
     private JwtAuthenticationInterceptor jwtAuthenticationInterceptor;
-    
+
+    @Autowired
+    private RateLimitInterceptor rateLimitInterceptor;
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(rateLimitInterceptor)
+                .addPathPatterns("/user/login");
+
         registry.addInterceptor(jwtAuthenticationInterceptor)
                 // 拦截所有请求
                 .addPathPatterns("/**")
@@ -49,7 +56,13 @@ public class WebConfig implements WebMvcConfigurer {
                         "/error",
                         // 头像上传路径
                         "/uploads/avatar/**",
-                        "/question/query"
+                        "/question/query",
+                        "/question_template/get",
+                        // 题解公开读接口
+                        "/question_solution/list/page",
+                        "/question_solution/get",
+                        "/question_solution/view",
+                        "/question_solution/total/count"
                 );
     }
     

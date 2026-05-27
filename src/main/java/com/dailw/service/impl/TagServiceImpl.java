@@ -12,6 +12,8 @@ import com.dailw.model.entity.Tag;
 import com.dailw.service.interfaces.TagService;
 import com.dailw.mapper.TagMapper;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,6 +28,7 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag>
     implements TagService{
 
     @Override
+    @CacheEvict(value = "tagList", allEntries = true)
     public Long addTag(TagAddRequest tagAddRequest, Long userId) {
         String name = tagAddRequest.getName();
         if (StringUtils.isBlank(name)) {
@@ -51,6 +54,7 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag>
     }
 
     @Override
+    @CacheEvict(value = "tagList", allEntries = true)
     public Boolean deleteTag(Long id) {
         Tag tag = this.getById(id);
         if (tag == null) {
@@ -73,6 +77,7 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag>
     }
 
     @Override
+    @Cacheable(value = "tagList", key = "'all'")
     public List<Tag> listAllTags() {
         LambdaQueryWrapper<Tag> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.orderByAsc(Tag::getName);

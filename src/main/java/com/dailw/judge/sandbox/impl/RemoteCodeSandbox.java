@@ -48,13 +48,13 @@ public class RemoteCodeSandbox implements CodeSandbox {
             String responseBody = response.getBody();
             if (StringUtils.isBlank(responseBody)) {
                 log.error("远程代码沙箱响应为空");
-                throw new BusinessException(ErrorCode.API_REQUEST_ERROR, "远程代码沙箱响应为空");
+            throw new BusinessException(ErrorCode.API_REQUEST_ERROR, "远程代码沙箱响应为空");
             }
             log.info("远程代码沙箱调用成功，返回结果: {}", responseBody);
             return StaticJsonUtil.toObj(responseBody, ExecuteCodeResponse.class);
         } catch (Exception e) {
-            log.error("调用远程代码沙箱异常，错误信息: ", e);
-            throw new BusinessException(ErrorCode.API_REQUEST_ERROR, "调用远程代码沙箱异常: " + e.getMessage());
+            log.error("调用远程代码沙箱异常", e);
+            throw new BusinessException(ErrorCode.API_REQUEST_ERROR, "判题服务暂时不可用，请稍后重试");
         }
     }
 }

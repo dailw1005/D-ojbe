@@ -7,6 +7,7 @@ import com.dailw.model.dto.questionsolution.QuestionSolutionUpdateRequest;
 import com.dailw.model.entity.QuestionSolution;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.dailw.model.vo.QuestionSolutionVO;
+import com.dailw.model.vo.SolutionStatsVO;
 import java.util.Map;
 
 /**
@@ -45,9 +46,18 @@ public interface QuestionSolutionService extends IService<QuestionSolution> {
     /**
      * 分页查询题解
      * @param questionSolutionQueryRequest
+     * @param currentUserId 当前用户ID（可为null，未登录时传null）
      * @return
      */
-    Page<QuestionSolutionVO> getQuestionSolutionVOPage(QuestionSolutionQueryRequest questionSolutionQueryRequest);
+    Page<QuestionSolutionVO> getQuestionSolutionVOPage(QuestionSolutionQueryRequest questionSolutionQueryRequest, Long currentUserId);
+
+    /**
+     * 根据ID查询题解详情
+     * @param id
+     * @param currentUserId 当前用户ID（可为null）
+     * @return
+     */
+    QuestionSolutionVO getQuestionSolutionVOById(Long id, Long currentUserId);
 
     /**
      * 题解点赞
@@ -60,16 +70,17 @@ public interface QuestionSolutionService extends IService<QuestionSolution> {
     /**
      * 题解浏览
      * @param id
+     * @param userId 当前用户ID（可为null，未登录传null）
      * @return
      */
-    Boolean viewQuestionSolution(Long id);
+    Boolean viewQuestionSolution(Long id, Long userId);
 
     /**
      * 获取当前用户题解统计数据
      * @param userId
      * @return
      */
-    Map<String, Long> getUserSolutionStats(Long userId);
+    SolutionStatsVO getUserSolutionStats(Long userId);
 
-    Map<String, Long> getTotalSolutionStats();
+    SolutionStatsVO getTotalSolutionStats();
 }
