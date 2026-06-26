@@ -62,7 +62,10 @@ public class WebConfig implements WebMvcConfigurer {
                         "/question_solution/list/page",
                         "/question_solution/get",
                         "/question_solution/view",
-                        "/question_solution/total/count"
+                        "/question_solution/total/count",
+                        // 比赛公开读接口
+                        "/contest/list",
+                        "/contest/*/ranking"
                 );
     }
     

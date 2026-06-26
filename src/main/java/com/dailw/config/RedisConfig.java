@@ -105,7 +105,8 @@ public class RedisConfig implements CachingConfigurer {
                 "tagList", Duration.ofHours(1),
                 "template", Duration.ofHours(1),
                 "solutionStats", Duration.ofMinutes(5),
-                "submitStats", Duration.ofMinutes(5)
+                "submitStats", Duration.ofMinutes(5),
+                "dashboard", Duration.ofMinutes(5)
         );
 
         RedisCacheManager.RedisCacheManagerBuilder builder = RedisCacheManager.builder(connectionFactory)
@@ -117,7 +118,7 @@ public class RedisConfig implements CachingConfigurer {
 
         RedisCacheManager cacheManager = builder.build();
 
-        log.info("RedisCacheManager配置完成（8 个 cache 区域独立 TTL）");
+        log.info("RedisCacheManager配置完成（9 个 cache 区域独立 TTL）");
         return cacheManager;
     }
 

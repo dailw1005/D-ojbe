@@ -376,4 +376,13 @@ public interface RedisService {
      * @return 集合大小
      */
     Long zSize(String key);
+
+    /**
+     * 获取有序集合中元素的排名（从小到大，0起始）
+     *
+     * @param key 键
+     * @param value 值
+     * @return 排名（不存在返回null）
+     */
+    Long zRank(String key, Object value);
 }

@@ -28,9 +28,8 @@ public class RemoteCodeSandbox implements CodeSandbox {
 
     private final RestTemplate restTemplate;
 
-    public RemoteCodeSandbox() {
-        // 这里可以直接使用 new 也可以注入配置了连接池的 RestTemplate
-        this.restTemplate = new RestTemplate();
+    public RemoteCodeSandbox(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
     }
 
     @Override

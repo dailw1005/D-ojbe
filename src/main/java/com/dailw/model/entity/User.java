@@ -115,6 +115,16 @@ public class User {
      */
     private String role;
 
+    /**
+     * 声望值
+     */
+    private Integer reputation;
+
+    /**
+     * 用户等级：0-9
+     */
+    private Integer level;
+
     @Override
     public boolean equals(Object that) {
         if (this == that) {

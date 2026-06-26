@@ -8,7 +8,10 @@ import com.dailw.exception.BusinessException;
 import com.dailw.interceptor.JwtAuthenticationInterceptor;
 import com.dailw.model.dto.questionsubmit.QuestionSubmitAddRequest;
 import com.dailw.model.dto.questionsubmit.QuestionSubmitQueryRequest;
+import com.dailw.model.entity.QuestionSubmit;
+import com.dailw.model.enums.QuestionSubmitStatusEnum;
 import com.dailw.model.vo.QuestionSubmitVO;
+import com.dailw.mq.JudgeProducer;
 import com.dailw.service.interfaces.QuestionSubmitService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,6 +35,9 @@ public class QuestionSubmitController {
 
     @Resource
     private QuestionSubmitService questionSubmitService;
+
+    @Resource
+    private JudgeProducer judgeProducer;
 
     /**
      * 提交代码
@@ -111,5 +117,68 @@ public class QuestionSubmitController {
         countMap.put("acceptedCount", acceptedCount);
 
         return ResultUtils.success(countMap);
+    }
+
+    /**
+     * 根据提交 ID 获取提交详情（仅本人）
+     *
+     * @param id      提交 ID
+     * @param request HTTP 请求
+     * @return 提交视图（包含完整判题信息，含用例结果）
+     */
+    @GetMapping("/get/vo/byId")
+    public BaseResponse<QuestionSubmitVO> getQuestionSubmitVoById(long id, HttpServletRequest request) {
+        if (id <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        Long currentUserId = JwtAuthenticationInterceptor.getCurrentUserId(request);
+        if (currentUserId == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        QuestionSubmit questionSubmit = questionSubmitService.getById(id);
+        if (questionSubmit == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "提交不存在");
+        }
+        if (!currentUserId.equals(questionSubmit.getUserId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权查看他人提交");
+        }
+        QuestionSubmitVO vo = QuestionSubmitVO.objToVo(questionSubmit);
+        return ResultUtils.success(vo);
+    }
+
+    /**
+     * 重新触发判题（仅本人）
+     *
+     * @param id      提交 ID
+     * @param request HTTP 请求
+     * @return 是否成功发送判题消息
+     */
+    @PostMapping("/rejudge")
+    public BaseResponse<Boolean> rejudge(long id, HttpServletRequest request) {
+        if (id <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        Long currentUserId = JwtAuthenticationInterceptor.getCurrentUserId(request);
+        if (currentUserId == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        QuestionSubmit questionSubmit = questionSubmitService.getById(id);
+        if (questionSubmit == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "提交不存在");
+        }
+        if (!currentUserId.equals(questionSubmit.getUserId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权重新判题他人提交");
+        }
+        // 重置为等待中并清空判题信息，再发送 Kafka 消息触发判题
+        QuestionSubmit update = new QuestionSubmit();
+        update.setId(id);
+        update.setStatus(QuestionSubmitStatusEnum.PENDING.getValue());
+        update.setJudgeInfo("{}");
+        boolean ok = questionSubmitService.updateById(update);
+        if (!ok) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "重置提交状态失败");
+        }
+        judgeProducer.sendMessage(String.valueOf(id));
+        return ResultUtils.success(true);
     }
 }

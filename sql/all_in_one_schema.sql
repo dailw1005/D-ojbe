@@ -45,7 +45,9 @@ CREATE TABLE IF NOT EXISTS `user` (
     `create_by` BIGINT COMMENT '创建人ID',
     `update_by` BIGINT COMMENT '更新人ID',
     `deleted` TINYINT DEFAULT 0 COMMENT '逻辑删除标志：0-未删除，1-已删除',
-    `role` VARCHAR(20) DEFAULT 'user' COMMENT '用户角色：admin-管理员，user-普通用户，guest-访客',
+    `role` VARCHAR(20) DEFAULT 'user' COMMENT '用户角色：admin-管理员，user-普通用户，guest-访客，ban-禁用',
+    `reputation` INT DEFAULT 0 COMMENT '声望值',
+    `level` TINYINT DEFAULT 0 COMMENT '用户等级：0-9',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_username` (`username`),
     UNIQUE KEY `uk_email` (`email`),
@@ -93,15 +95,17 @@ CREATE TABLE IF NOT EXISTS `question_submit` (
     `language` VARCHAR(128) NOT NULL COMMENT '编程语言',
     `code` TEXT NOT NULL COMMENT '用户代码',
     `judge_info` TEXT DEFAULT NULL COMMENT '判题信息（json对象）',
-    `status` INT DEFAULT 0 NOT NULL COMMENT '判题状态（0-待判题、1-判题中、2-成功、3-失败）',
+    `status` INT DEFAULT 0 NOT NULL COMMENT '判题状态（0-待判题、1-判题中、2-通过、3-答案错误、4-时间超限、5-内存超限、6-运行错误、7-编译错误、8-系统错误）',
     `question_id` BIGINT NOT NULL COMMENT '题目 id',
     `user_id` BIGINT NOT NULL COMMENT '创建用户 id',
+    `competition_id` BIGINT DEFAULT NULL COMMENT '比赛ID（NULL表示非比赛提交）',
     `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
     `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL COMMENT '更新时间',
     `deleted` TINYINT DEFAULT 0 NOT NULL COMMENT '是否删除',
     PRIMARY KEY (`id`),
     INDEX `idx_question_id` (`question_id`),
-    INDEX `idx_user_id` (`user_id`)
+    INDEX `idx_user_id` (`user_id`),
+    INDEX `idx_competition_id` (`competition_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='题目提交';
 
 -- 题目代码模板表 (扩展)
@@ -159,3 +163,54 @@ CREATE TABLE IF NOT EXISTS `question_tag` (
     INDEX `idx_question_id` (`question_id`),
     INDEX `idx_tag_id` (`tag_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='题目标签关联';
+
+-- ============================================================
+-- 三、比赛模块
+-- ============================================================
+
+-- 比赛表
+CREATE TABLE IF NOT EXISTS `competition` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '比赛ID',
+    `title` VARCHAR(200) NOT NULL COMMENT '比赛标题',
+    `description` TEXT DEFAULT NULL COMMENT '比赛说明（Markdown格式）',
+    `type` VARCHAR(10) NOT NULL COMMENT '评分模式：ACM（解题数+罚时）- OI（总分）',
+    `start_time` DATETIME NOT NULL COMMENT '比赛开始时间',
+    `end_time` DATETIME NOT NULL COMMENT '比赛结束时间',
+    `password` VARCHAR(100) DEFAULT NULL COMMENT '参赛密码（NULL表示公开比赛，无需密码）',
+    `user_id` BIGINT NOT NULL COMMENT '创建者用户ID',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL COMMENT '更新时间',
+    `deleted` TINYINT DEFAULT 0 NOT NULL COMMENT '逻辑删除标志：0-未删除，1-已删除',
+    PRIMARY KEY (`id`),
+    INDEX `idx_user_id` (`user_id`),
+    INDEX `idx_start_time` (`start_time`),
+    INDEX `idx_end_time` (`end_time`),
+    INDEX `idx_deleted` (`deleted`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='比赛信息表';
+
+-- 比赛-题目关联表
+CREATE TABLE IF NOT EXISTS `competition_question` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '关联ID',
+    `competition_id` BIGINT NOT NULL COMMENT '比赛ID',
+    `question_id` BIGINT NOT NULL COMMENT '题目ID',
+    `display_order` INT DEFAULT 0 COMMENT '题目序号（用于展示排序）',
+    `score` INT DEFAULT NULL COMMENT 'OI模式下的题目分值（ACM模式可为NULL）',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    UNIQUE INDEX `uk_competition_question` (`competition_id`, `question_id`),
+    INDEX `idx_competition_id` (`competition_id`),
+    INDEX `idx_question_id` (`question_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='比赛题目关联表';
+
+-- 比赛报名表
+CREATE TABLE IF NOT EXISTS `competition_registration` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '报名ID',
+    `competition_id` BIGINT NOT NULL COMMENT '比赛ID',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '报名时间',
+    PRIMARY KEY (`id`),
+    UNIQUE INDEX `uk_competition_user` (`competition_id`, `user_id`),
+    INDEX `idx_competition_id` (`competition_id`),
+    INDEX `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='比赛报名表';

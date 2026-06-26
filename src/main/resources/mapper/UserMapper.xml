@@ -36,4 +36,20 @@
         update_time,create_by,update_by,
         deleted,role
     </sql>
+
+    <select id="selectDailyNewUsers" resultType="java.util.Map">
+        SELECT DATE(create_time) AS date, COUNT(*) AS count
+        FROM user
+        WHERE create_time &gt;= DATE_SUB(CURDATE(), INTERVAL #{days} DAY)
+          AND deleted = 0
+        GROUP BY DATE(create_time)
+        ORDER BY date ASC
+    </select>
+
+    <select id="selectRoleDistribution" resultType="java.util.Map">
+        SELECT role, COUNT(*) AS count
+        FROM user
+        WHERE deleted = 0
+        GROUP BY role
+    </select>
 </mapper>

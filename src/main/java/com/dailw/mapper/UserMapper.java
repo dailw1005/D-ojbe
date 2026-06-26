@@ -2,6 +2,10 @@ package com.dailw.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.dailw.model.entity.User;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
+import java.util.Map;
 
 /**
 * @author trave
@@ -11,6 +15,9 @@ import com.dailw.model.entity.User;
 */
 public interface UserMapper extends BaseMapper<User> {
 
+    List<Map<String, Object>> selectDailyNewUsers(@Param("days") int days);
+
+    List<Map<String, Object>> selectRoleDistribution();
 }
 
 

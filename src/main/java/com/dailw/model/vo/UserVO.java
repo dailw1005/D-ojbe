@@ -82,6 +82,16 @@ public class UserVO implements Serializable {
     private String role;
 
     /**
+     * 声望值
+     */
+    private Integer reputation;
+
+    /**
+     * 用户等级：0-9
+     */
+    private Integer level;
+
+    /**
      * 创建时间
      */
     private Date createTime;

@@ -2,6 +2,7 @@ package com.dailw.judge;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.dailw.common.ErrorCode;
+import com.dailw.event.JudgeCompletedEvent;
 import com.dailw.exception.BusinessException;
 import com.dailw.judge.sandbox.CodeSandbox;
 import com.dailw.judge.sandbox.model.ExecuteCodeRequest;
@@ -20,6 +21,7 @@ import com.dailw.utils.StaticJsonUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -37,6 +39,9 @@ public class JudgeServiceImpl implements JudgeService {
 
     @Resource
     private CodeSandbox codeSandbox;
+
+    @Resource
+    private ApplicationEventPublisher eventPublisher;
 
     @Override
     public QuestionSubmit doJudge(long questionSubmitId) {
@@ -114,7 +119,9 @@ public class JudgeServiceImpl implements JudgeService {
             errorJudgeInfo.setMessage("判题服务暂时不可用，请稍后重试");
             questionSubmitUpdate.setJudgeInfo(StaticJsonUtil.toJsonStr(errorJudgeInfo));
             questionSubmitService.updateById(questionSubmitUpdate);
-            return questionSubmitService.getById(questionSubmitId);
+            QuestionSubmit finalSubmit = questionSubmitService.getById(questionSubmitId);
+            eventPublisher.publishEvent(new JudgeCompletedEvent(this, finalSubmit));
+            return finalSubmit;
         }
 
         // 5. 根据沙箱的执行结果，设置题目的判题状态和信息
@@ -176,6 +183,8 @@ public class JudgeServiceImpl implements JudgeService {
                 .eq("id", questionId)
                 .update();
 
-        return questionSubmitService.getById(questionSubmitId);
+        QuestionSubmit finalSubmit = questionSubmitService.getById(questionSubmitId);
+        eventPublisher.publishEvent(new JudgeCompletedEvent(this, finalSubmit));
+        return finalSubmit;
     }
 }

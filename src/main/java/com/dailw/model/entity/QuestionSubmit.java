@@ -60,6 +60,11 @@ public class QuestionSubmit {
     private Date updateTime;
 
     /**
+     * 比赛ID（NULL 表示非比赛提交）
+     */
+    private Long competitionId;
+
+    /**
      * 是否删除
      */
     private Integer deleted;

@@ -6,7 +6,7 @@ spring:
 
   # 数据库配置 - 开发环境
   datasource:
-    url: jdbc:mysql://10.73.128.27:3306/dailw
+    url: jdbc:mysql://10.240.172.149:3306/dailw?serverTimezone=Asia/Shanghai
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: 1005
@@ -21,7 +21,7 @@ spring:
   data:
     redis:
       database: 1
-      host: 10.73.128.27
+      host: 10.240.172.149
       port: 6379
       timeout: 50000
       password: 1005
@@ -75,9 +75,22 @@ jwt:
   access-token-expiration: 7200000    # 2小时 (毫秒)
   refresh-token-expiration: 604800000 # 7天 (毫秒)
 
+# 文件上传配置
+file:
+  upload:
+    avatar:
+      path: D:\JetBrains\IdeaProjects\study\dailw\uploads\avatar\
+      url-prefix: uploads/avatar/
+      # 允许的文件扩展名
+      allowed-extensions: jpg,jpeg,png,gif,bmp,webp
+      # 允许的MIME类型
+      allowed-mime-types: image/jpeg,image/png,image/gif,image/bmp,image/webp
+      # 最大文件大小（字节）
+      max-file-size: 5242880
+
 dailw:
   codesandbox:
-    url: http://10.73.128.27:9119/judge
+    url: http://10.240.172.149:9119/judge
 
 # 日志配置 - 开发环境
 logging:

@@ -1,4 +1,6 @@
 spring:
+  jackson:
+    time-zone: Asia/Shanghai
   application:
     name: dailw
   cache:

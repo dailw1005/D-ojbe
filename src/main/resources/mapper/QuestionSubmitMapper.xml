@@ -14,6 +14,7 @@
             <result property="userId" column="user_id" jdbcType="BIGINT"/>
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="competitionId" column="competition_id" jdbcType="BIGINT"/>
             <result property="deleted" column="deleted" jdbcType="TINYINT"/>
     </resultMap>
 
@@ -21,6 +22,22 @@
         id,language,code,
         judge_info,status,question_id,
         user_id,create_time,update_time,
-        deleted
+        competition_id,deleted
     </sql>
+
+    <select id="selectDailySubmitCount" resultType="java.util.Map">
+        SELECT DATE(create_time) AS date, COUNT(*) AS count
+        FROM question_submit
+        WHERE create_time &gt;= DATE_SUB(CURDATE(), INTERVAL #{days} DAY)
+          AND deleted = 0
+        GROUP BY DATE(create_time)
+        ORDER BY date ASC
+    </select>
+
+    <select id="selectStatusDistribution" resultType="java.util.Map">
+        SELECT status, COUNT(*) AS count
+        FROM question_submit
+        WHERE deleted = 0
+        GROUP BY status
+    </select>
 </mapper>

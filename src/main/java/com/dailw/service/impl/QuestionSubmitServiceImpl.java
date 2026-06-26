@@ -87,11 +87,13 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         Integer status = questionSubmitQueryRequest.getStatus();
         Long questionId = questionSubmitQueryRequest.getQuestionId();
         Long submitUserId = questionSubmitQueryRequest.getUserId();
+        Long competitionId = questionSubmitQueryRequest.getCompetitionId();
 
         queryWrapper.eq(StringUtils.isNotBlank(language), QuestionSubmit::getLanguage, language);
         queryWrapper.eq(status != null, QuestionSubmit::getStatus, status);
         queryWrapper.eq(questionId != null, QuestionSubmit::getQuestionId, questionId);
         queryWrapper.eq(submitUserId != null, QuestionSubmit::getUserId, submitUserId);
+        queryWrapper.eq(competitionId != null, QuestionSubmit::getCompetitionId, competitionId);
         queryWrapper.orderByDesc(QuestionSubmit::getCreateTime);
 
         Page<QuestionSubmit> questionSubmitPage = this.page(new Page<>(current, size), queryWrapper);

@@ -724,4 +724,21 @@ public class RedisServiceImpl implements RedisService {
             throw new RedisOperationException("ZCARD操作失败", e);
         }
     }
+
+    @Override
+    public Long zRank(String key, Object value) {
+        try {
+            long startTime = System.currentTimeMillis();
+            Long result = redisTemplate.opsForZSet().rank(key, value);
+            long executionTime = System.currentTimeMillis() - startTime;
+            performanceMonitor.recordOperation("ZRANK", executionTime);
+            performanceMonitor.recordSuccess("ZRANK");
+            log.debug("Redis ZRANK操作成功: key={}, value={}", key, value);
+            return result;
+        } catch (Exception e) {
+            performanceMonitor.recordFailure("ZRANK");
+            log.error("Redis ZRANK操作失败: key={}, value={}", key, e);
+            throw new RedisOperationException("ZRANK操作失败", e);
+        }
+    }
 }

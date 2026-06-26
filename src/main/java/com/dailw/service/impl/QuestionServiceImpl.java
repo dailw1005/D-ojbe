@@ -80,6 +80,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
 
         Question question = new Question();
 
+        question.setId(questionUpdateRequest.getId());
         question.setTitle(questionUpdateRequest.getTitle());
         question.setContent(questionUpdateRequest.getContent());
         question.setAnswer(questionUpdateRequest.getAnswer());

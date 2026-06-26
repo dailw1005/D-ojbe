@@ -265,6 +265,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         userVO.setLastLoginIp(user.getLastLoginIp());
         userVO.setLoginCount(user.getLoginCount());
         userVO.setRole(user.getRole());
+        userVO.setReputation(user.getReputation());
+        userVO.setLevel(user.getLevel());
         userVO.setCreateTime(user.getCreateTime());
         return userVO;
     }
