@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.dailw.mapper.QuestionMapper">
+<mapper namespace="com.ojbe.mapper.QuestionMapper">
 
-    <resultMap id="BaseResultMap" type="com.dailw.model.entity.Question">
+    <resultMap id="BaseResultMap" type="com.ojbe.model.entity.Question">
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="title" column="title" jdbcType="VARCHAR"/>
             <result property="content" column="content" jdbcType="VARCHAR"/>
@@ -32,7 +32,7 @@
         deleted
     </sql>
 
-    <select id="selectQuestionInfo" resultType="com.dailw.model.vo.QuestionInfoVO">
+    <select id="selectQuestionInfo" resultType="com.ojbe.model.vo.QuestionInfoVO">
         SELECT
             COUNT(*) AS total,
             SUM(CASE WHEN difficulty = 'easy' OR difficulty = '简单' THEN 1 ELSE 0 END) AS easyCount,

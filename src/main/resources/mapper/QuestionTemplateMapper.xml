@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.dailw.mapper.QuestionTemplateMapper">
+<mapper namespace="com.ojbe.mapper.QuestionTemplateMapper">
 
-    <resultMap id="BaseResultMap" type="com.dailw.model.entity.QuestionTemplate">
+    <resultMap id="BaseResultMap" type="com.ojbe.model.entity.QuestionTemplate">
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="questionId" column="question_id" jdbcType="BIGINT"/>
             <result property="language" column="language" jdbcType="VARCHAR"/>
