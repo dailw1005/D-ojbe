@@ -10,10 +10,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @MapperScan("com.ojbe.mapper")
 @EnableScheduling
 @EnableCaching
-public class DailwApplication {
+public class DojbeApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(DailwApplication.class, args);
+        SpringApplication.run(DojbeApplication.class, args);
     }
 
 }
